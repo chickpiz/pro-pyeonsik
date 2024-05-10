@@ -2,7 +2,7 @@
 
 Happetite 2024 Team B Project 1 (ongoing)
 
-## Setup Environments (all dependencies)
+## Setup Environment
 
 ```shell
 git clone https://github.com/chickpiz/pro-pyeonsik.git
