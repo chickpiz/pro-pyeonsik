@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, KeyboardAvoidingView, Text, Pressable, StyleSheet, TextInput, ScrollView, RefreshControl } from 'react-native';
+import { View, KeyboardAvoidingView, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Platform, BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { WithLocalSvg } from 'react-native-svg/css';
