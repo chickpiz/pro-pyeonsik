@@ -8,6 +8,8 @@ SplashScreen.preventAutoHideAsync();
 function loadResources() {
   
   const [appIsReady, setAppIsReady] = useState(false);
+  const initFinished = false;
+  //const [initFinished, setInitFinished] = useState(false); // for later
 
   useEffect(() => {
     async function prepareApp() {
@@ -18,7 +20,10 @@ function loadResources() {
           'Pretendard-SemiBold': require('../assets/fonts/Pretendard-SemiBold.otf'),
           'Pretendard-Regular': require('../assets/fonts/Pretendard-Regular.otf'),
         });
-        // TODO: Check and update current menu data
+        // TODO: Check and update current menu data (crawl web)
+        // TODO: Check if the initial preference setting is finished -> sel initFinished
+        // TODO: Load customized preferenced data
+        // TODO: Load user-added menu data
       } catch (e) {
         console.warn(e);
       } finally {
@@ -31,7 +36,7 @@ function loadResources() {
     prepareApp();
   }, []);
 
-  return appIsReady;
+  return [appIsReady, initFinished];
 }
 
 export default loadResources;

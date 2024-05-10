@@ -7,7 +7,7 @@ import loadResources from './hooks/LoadResources';
 import useColorScheme from './hooks/UseColorScheme';
 
 export default function App() {
-  const isLoadingComplete = loadResources();
+  const [isLoadingComplete, initFinished] = loadResources();
   const colorScheme = useColorScheme();
 
   if (!isLoadingComplete) {
@@ -15,7 +15,10 @@ export default function App() {
   } else {
     return (
       <SafeAreaProvider>
-        <Navigation colorScheme={colorScheme} />
+        <Navigation 
+          initFinished={initFinished}
+          colorScheme={colorScheme}
+        />
         <StatusBar />
       </SafeAreaProvider>
     );

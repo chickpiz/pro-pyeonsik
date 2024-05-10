@@ -1,0 +1,218 @@
+import { useState, useContext } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { WithLocalSvg } from 'react-native-svg/css';
+import { ICON_MINUS } from '../assets/Index';
+
+import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
+import { MenuContext } from '../contexts/MenuContext';
+
+const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
+const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
+const TEXT_BODY = '취향을 반영해 식당 메뉴를 나열해 드려요.\n중복 선택, 또는 선택 없이 넘어가기가 가능해요.';
+
+const TEXT_SELECT_ANOTHER = '다른 음식 고르기';
+
+const CATEGORY_MEAT = 0;
+const CATEGORY_FISH = 1;
+const CATEGORY_VEGET = 2;
+const CATEGORY_DAIRY = 3;
+const CATEGORY_OTHERS = 4;
+
+const DEFAULT_MENUS = {
+  0: { // meat
+    0: '돼지고기 전체',
+    1: '소고기 전체',
+    2: '닭고기 전체',
+    3: '치킨',
+    4: '돈가스',
+    5: '찜닭',
+    6: '삼겹살',
+    7: '갈비',
+    8: '제육',
+    9: '탕수육',
+  },
+  1: { // fish
+    0: '연어',
+    1: '가자미',
+    2: '어묵',
+    3: '참치',
+    4: '고등어',
+    5: '임연수',
+    6: '쥐어채',
+  },
+  2: { // veget
+    0: '채소 전체',
+    1: '김치',
+    2: '샐러드',
+    3: '대파',
+    4: '콩나물',
+    5: '감자',
+    6: '고추',
+    7: '토마토',
+  },
+  3: { // dairy
+    0: '계란',
+    1: '치즈',
+    2: '마요네즈',
+  },
+  4: { // others
+    0: '라면',
+    1: '튀김',
+    2: '떡볶이',
+    3: '파스타',
+    4: '순두부',
+    5: '카레',
+    6: '된장',
+    7: '미역',
+    8: '유부',
+  },
+};
+
+const SelectMenu = () => {
+
+  const route = useRoute();
+  const navigation = useNavigation();
+
+  const mode = route.params.mode;
+  const category = route.params.category;
+
+  const [menuName, setMenuName] = useState('');
+  const [menuLike, setMenuLike] = useState(true);
+  const [likesTable, setLikesTable] = useState([]);
+  const { menu, dispatch: dispatchMenu } = useContext(MenuContext);
+
+  const saveMenuState = async () => {
+    if (menuName == '') {
+        return;
+    }
+    dispatchMenu({type: 'push', value: 
+    {
+        name: menuName,
+        like: mode ? true : false,
+    }});
+  }
+
+  const isInLikesTable = (name) => {
+    return (likesTable.indexOf(name) > -1);
+  }
+
+  const pushLikes = (name) => {
+    setLikesTable([...likesTable, name]);
+    console.log(likesTable);
+  }
+
+  const removeLikes = (name) => {
+    setLikesTable(table => {
+      return table.filter(item => item !== name)
+    })
+  }
+
+  const menuButtons = [];
+  const currentDefaultMenus = DEFAULT_MENUS[category];
+  for (const key in currentDefaultMenus) {
+    let name = currentDefaultMenus[key];
+    menuButtons.push(
+      <Pressable 
+        key={key} 
+        style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {},
+          {}, isInLikesTable(name) ? styles.button_menu_selected : styles.button_menu]}
+        onPress={()=>{isInLikesTable(name) ? removeLikes(name) : pushLikes(name)}} >
+        <Text style={styles.text_button}>{name}</Text>
+        {isInLikesTable(name) && <WithLocalSvg style={{marginLeft: rw(5), alignSelf: 'center'}} asset={ICON_MINUS}/>}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* select likes */}
+      {mode && <Text style={styles.text_heading}>{TEXT_HEADING_LIKES}</Text>}
+      {/* select dislikes */}
+      {!(mode) && <Text style={styles.text_heading}>{TEXT_HEADING_DISLIKES}</Text>}
+      <Text style={styles.text_body}>{TEXT_BODY}</Text> 
+      <View style={styles.container_menu_buttons}>{menuButtons}</View>
+      <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_select_other]}
+          onPress={()=>navigation.navigate('SelectPreference')}>
+            <Text style={styles.text_button}>{TEXT_SELECT_ANOTHER}</Text>
+        </Pressable>
+    </View>
+  );
+
+}
+
+export default SelectMenu;
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+  },
+  container_menu_buttons: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignContent: 'flex-start',
+    width: rw(385),
+    height: rh(489),
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'center',
+    marginTop: rh(41),
+    paddingLeft: rw(10),
+    paddingRight: rw(10),
+    gap: rh(17),
+  },
+  text_heading: {
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: rw(28),
+    textAlign: 'center',
+    marginTop: rh(145),
+  },
+  text_body: {
+    fontFamily: 'Pretendard-Regular',
+    fontSize: rw(17),
+    color: '#6B6B6B',
+    textAlign: 'left',
+    alignSelf: 'center',
+    marginTop: rh(20),
+  },
+  text_button: {
+    fontFamily: 'Pretendard-Regular',
+    textAlign: 'center',
+    alignSelf:'center',
+    fontSize: rw(20),
+  },
+  button_menu: {
+    backgroundColor: '#D9D9D9',
+    borderRadius: rw(10),
+    width: 'fit-content',
+    height: rh(38),
+    justifyContent: 'center',
+    paddingLeft: rw(15),
+    paddingRight: rw(15),
+  },
+  button_menu_selected: {
+    backgroundColor: '#FFBFBF',
+    borderRadius: rw(10),
+    width: 'fit-content',
+    height: rh(38),
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingLeft: rw(15),
+    paddingRight: rw(10),
+  },
+  button_select_other: {
+    backgroundColor: '#FFBFBF',
+    borderRadius: rw(10),
+    justifyContent: 'center',
+    marginTop: rh(86),
+    marginBottom: rh(40),
+    marginLeft: rw(218),
+    marginRight: rw(30),
+    paddingTop: rh(8),
+    paddingBottom: rh(8),
+    paddingLeft: rw(10),
+    paddingRight: rw(10),
+  },
+})

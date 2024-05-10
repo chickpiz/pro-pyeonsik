@@ -1,2 +1,2 @@
 // images
-export const IMAGE_SPLASH = require('./images/splash.png'); 
+export const ICON_MINUS = require('./icons/minus.svg');
