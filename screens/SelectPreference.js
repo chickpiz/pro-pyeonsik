@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BackHandler } from 'react-native';
-import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
-
-const PERSISTENCE_KEY = 'SCREEN_SELECTPREFERENCE';
 
 const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
 const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
@@ -27,7 +25,6 @@ const CATEGORY_OTHERS = 4;
 
 const SelectPreference = () => {
 
-  const route = useRoute();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
@@ -35,11 +32,9 @@ const SelectPreference = () => {
    * mode == true: select likes
    * mode == false: select dislikes
    */
-  //const mode = route.params.mode;
   const [mode, setMode] = useState(true);
 
   const navigateTo = (_category) => {
-    //if(!mode) BackHandler.removeEventListener('hardwareBackPress', handleBack);
     if (_category < 0) {
       navigation.navigate(
         'AddCustomMenu',

@@ -1,13 +1,12 @@
 import { useState, useContext, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BackHandler } from 'react-native';
-import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { WithLocalSvg } from 'react-native-svg/css';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ICON_MINUS } from '../assets/Index';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
-import { MenuContext } from '../contexts/MenuContext';
 
 const PERSISTENCE_KEY = 'SCREEN_SELECTMENU';
 
@@ -16,12 +15,6 @@ const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
 const TEXT_BODY = '취향을 반영해 식당 메뉴를 나열해 드려요.\n중복 선택, 또는 선택 없이 넘어가기가 가능해요.';
 
 const TEXT_SELECT_ANOTHER = '다른 음식 고르기';
-
-const CATEGORY_MEAT = 0;
-const CATEGORY_FISH = 1;
-const CATEGORY_VEGET = 2;
-const CATEGORY_DAIRY = 3;
-const CATEGORY_OTHERS = 4;
 
 const DEFAULT_MENUS = {
   0: { // meat
@@ -77,20 +70,15 @@ const SelectMenu = () => {
 
   const route = useRoute();
   const navigation = useNavigation();
-  const isFocused = useIsFocused();
 
   const mode = route.params.mode;
   const category = route.params.category;
 
-  const [menuName, setMenuName] = useState('');
-  const [menuLike, setMenuLike] = useState(true);
   const [likesTable, setLikesTable] = useState([]);
   const [dislikesTable, setDislikesTable] = useState([]);
-  const { menu, dispatch: dispatchMenu } = useContext(MenuContext);
 
   // load saved selections
   useEffect(()=>{
-    console.log('loaded');
     const restoreState = async () => {
       try {
         const savedLikestable= await AsyncStorage.getItem(PERSISTENCE_KEY+'_LIKESTABLE');
@@ -113,17 +101,6 @@ const SelectMenu = () => {
     BackHandler.addEventListener('hardwareBackPress', saveTables)
     return ()=>BackHandler.removeEventListener('hardwareBackPress', saveTables)
   }, [saveTables])
-
-  const saveMenuState = async () => {
-    if (menuName == '') {
-        return;
-    }
-    dispatchMenu({type: 'push', value: 
-    {
-        name: menuName,
-        like: mode,
-    }});
-  }
 
   const isInLikesTable = (name) => {
     return (likesTable.indexOf(name) > -1);
@@ -168,7 +145,6 @@ const SelectMenu = () => {
   for (const key in currentDefaultMenus) {
     let name = currentDefaultMenus[key];
     let enabled = !inDisabledMenus(name);
-    console.log(enabled);
     menuButtons.push(
       <Pressable 
         key={key} 
