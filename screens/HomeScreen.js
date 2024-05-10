@@ -6,7 +6,7 @@ const HomeScreen = () => {
 
   return (
     <View style={{flex: 1, height: '100%', justifyContent: 'center'}}>
-        <Text style={{alignSelf: 'center'}}>This is homescreen</Text>
+        <Text style={{alignSelf: 'center'}}>당신의 취향을 반영 중...</Text>
     </View>
   )
 }

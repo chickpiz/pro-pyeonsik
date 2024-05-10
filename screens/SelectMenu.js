@@ -1,11 +1,15 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { BackHandler } from 'react-native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { WithLocalSvg } from 'react-native-svg/css';
-import { ICON_MINUS } from '../assets/Index';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { ICON_MINUS } from '../assets/Index';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
 import { MenuContext } from '../contexts/MenuContext';
+
+const PERSISTENCE_KEY = 'SCREEN_SELECTMENU';
 
 const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
 const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
@@ -73,6 +77,7 @@ const SelectMenu = () => {
 
   const route = useRoute();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   const mode = route.params.mode;
   const category = route.params.category;
@@ -80,7 +85,34 @@ const SelectMenu = () => {
   const [menuName, setMenuName] = useState('');
   const [menuLike, setMenuLike] = useState(true);
   const [likesTable, setLikesTable] = useState([]);
+  const [dislikesTable, setDislikesTable] = useState([]);
   const { menu, dispatch: dispatchMenu } = useContext(MenuContext);
+
+  // load saved selections
+  useEffect(()=>{
+    console.log('loaded');
+    const restoreState = async () => {
+      try {
+        const savedLikestable= await AsyncStorage.getItem(PERSISTENCE_KEY+'_LIKESTABLE');
+        const savedDislikestable= await AsyncStorage.getItem(PERSISTENCE_KEY+'_DISLIKESTABLE');
+
+        const loadedDislikes = savedDislikestable ? JSON.parse(savedDislikestable) : [];
+        const loadedLikes = savedLikestable ? JSON.parse(savedLikestable) : [];
+
+        setLikesTable(loadedLikes);
+        setDislikesTable(loadedDislikes);
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    restoreState();
+  }, []);
+
+  // save tables when back key pressed
+  useEffect(()=>{
+    BackHandler.addEventListener('hardwareBackPress', saveTables)
+    return ()=>BackHandler.removeEventListener('hardwareBackPress', saveTables)
+  }, [saveTables])
 
   const saveMenuState = async () => {
     if (menuName == '') {
@@ -89,7 +121,7 @@ const SelectMenu = () => {
     dispatchMenu({type: 'push', value: 
     {
         name: menuName,
-        like: mode ? true : false,
+        like: mode,
     }});
   }
 
@@ -99,7 +131,6 @@ const SelectMenu = () => {
 
   const pushLikes = (name) => {
     setLikesTable([...likesTable, name]);
-    console.log(likesTable);
   }
 
   const removeLikes = (name) => {
@@ -108,20 +139,56 @@ const SelectMenu = () => {
     })
   }
 
+  const isInDislikesTable = (name) => {
+    return (dislikesTable.indexOf(name) > -1);
+  }
+
+  const pushDislikes = (name) => {
+    setDislikesTable([...dislikesTable, name]);
+  }
+
+  const removeDislikes = (name) => {
+    setDislikesTable(table => {
+      return table.filter(item => item !== name)
+    })
+  }
+
+  const disabledMenus = mode ? dislikesTable : likesTable;
+
+  const inDisabledMenus = (name) => {
+    return (disabledMenus.indexOf(name) > -1);
+  }
+
   const menuButtons = [];
   const currentDefaultMenus = DEFAULT_MENUS[category];
+  const isInTable = mode ? isInLikesTable : isInDislikesTable;
+  const push = mode ? pushLikes : pushDislikes;
+  const remove = mode ? removeLikes : removeDislikes;
+
   for (const key in currentDefaultMenus) {
     let name = currentDefaultMenus[key];
+    let enabled = !inDisabledMenus(name);
+    console.log(enabled);
     menuButtons.push(
       <Pressable 
         key={key} 
-        style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {},
-          {}, isInLikesTable(name) ? styles.button_menu_selected : styles.button_menu]}
-        onPress={()=>{isInLikesTable(name) ? removeLikes(name) : pushLikes(name)}} >
-        <Text style={styles.text_button}>{name}</Text>
-        {isInLikesTable(name) && <WithLocalSvg style={{marginLeft: rw(5), alignSelf: 'center'}} asset={ICON_MINUS}/>}
+        style={({ pressed }) => [ enabled && pressed ? { opacity: 0.8 } : {},
+          (enabled && isInTable(name)) ? styles.button_menu_selected : styles.button_menu]}
+        onPress={()=>{enabled && isInTable(name) ? remove(name) : push(name)}} >
+        <Text style={[{opacity: (enabled ? 1.0 : 0.3)}, styles.text_button]}>{name}</Text>
+        {enabled && isInTable(name) && <WithLocalSvg style={{marginLeft: rw(5), alignSelf: 'center'}} asset={ICON_MINUS}/>}
       </Pressable>
     );
+  }
+
+  const saveTables = () => {
+    AsyncStorage.setItem(PERSISTENCE_KEY+'_LIKESTABLE', JSON.stringify(likesTable));
+    AsyncStorage.setItem(PERSISTENCE_KEY+'_DISLIKESTABLE', JSON.stringify(dislikesTable));
+  }
+
+  const navigateBack = () => {
+    saveTables();
+    navigation.navigate('SelectPreference')
   }
 
   return (
@@ -133,7 +200,7 @@ const SelectMenu = () => {
       <Text style={styles.text_body}>{TEXT_BODY}</Text> 
       <View style={styles.container_menu_buttons}>{menuButtons}</View>
       <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_select_other]}
-          onPress={()=>navigation.navigate('SelectPreference')}>
+          onPress={()=>navigateBack()}>
             <Text style={styles.text_button}>{TEXT_SELECT_ANOTHER}</Text>
         </Pressable>
     </View>

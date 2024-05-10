@@ -1,13 +1,15 @@
 import { useState, useContext, useEffect } from 'react';
 import { View, KeyboardAvoidingView, Text, Pressable, StyleSheet, TextInput, ScrollView, RefreshControl } from 'react-native';
-import { Platform } from 'react-native';
+import { Platform, BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { WithLocalSvg } from 'react-native-svg/css';
-import { ICON_MINUS } from '../assets/Index';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { ICON_MINUS } from '../assets/Index';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
 import { useKeyboard } from '../hooks/Keyboard';
 
+const PERSISTENCE_KEY = 'SCREEN_ADDCUSTOMMENU';
 
 const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
 const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
@@ -27,38 +29,68 @@ const AddCustomMenu = () => {
   const keyboardHeight = useKeyboard();
   const [inputText, setInputText] = useState('');
   const [buttonEnable, setButtonEnable] = useState(false);
-  const [menus, setMenus] = useState([]);
+  const [likes, setLikes] = useState([]);
+  const [dislikes, setDislikes] = useState([]);
   const [menuButtons, setMenuButtons] = useState([]);
+
+  // load saved selections
+  useEffect(()=>{
+    console.log('loaded');
+    const restoreState = async () => {
+      try {
+        const savedLikes= await AsyncStorage.getItem(PERSISTENCE_KEY+'_LIKES');
+        const savedDislikes= await AsyncStorage.getItem(PERSISTENCE_KEY+'_DISLIKES');
+
+        const loadedDislikes = savedDislikes ? JSON.parse(savedDislikes) : [];
+        const loadedLikes = savedLikes ? JSON.parse(savedLikes) : [];
+
+        setLikes(loadedLikes);
+        setDislikes(loadedDislikes);
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    restoreState();
+  }, []);
+
+  // save tables when back key pressed
+  useEffect(()=>{
+    BackHandler.addEventListener('hardwareBackPress', saveTables)
+    return ()=>BackHandler.removeEventListener('hardwareBackPress', saveTables)
+  }, [saveTables])
 
   useEffect(() => {
     if (inputText === '') setButtonEnable(false); 
     else setButtonEnable(true);
   }, [inputText]);
 
-  const addNewMenu = (name) => {
-    if (isInMenus(name)) return; // duplicated menu
-    setInputText('');
-    pushMenu(name);
-    setMenuButtons([...menuButtons,
+  const menus = mode ? likes : dislikes;
+  const setMenus = mode ? setLikes : setDislikes;
+  const disabledMenus = mode ? dislikes : likes;
+
+  useEffect(() => {
+    const updateMenuButtons = []
+    for (const key in menus) {
+      updateMenuButtons.push(
         <Pressable 
-          key={name}
+          key={menus[key]}
           style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_menu]}
-          onPress={()=>{removeMenuButton(name)}} >
-          <Text style={styles.text_button}>{name}</Text>
+          onPress={()=>{removeMenu(menus[key])}} >
+          <Text style={styles.text_button}>{menus[key]}</Text>
           <WithLocalSvg style={{marginLeft: rw(5), alignSelf: 'center'}} asset={ICON_MINUS}/>
         </Pressable>
-    ]);
-  }
+      );
+    }
+    setMenuButtons(updateMenuButtons);
+  }, [menus]);
 
-  const removeMenuButton = (name) => {
-    if (!isInMenus(name)) return;
-    const idx = menus.indexOf(name);
-    setMenuButtons(table => {
-      return table.filter((item, index) => index !== idx)
-    })
-    removeMenu(name);
+  const addNewMenu = (name) => {
+    if (isInMenus(name)) return; // duplicated menu
+    if (isInDisabledMenus(name)) return; // menu is in opposite preference
+    setInputText('');
+    pushMenu(name);
   }
-
+  
   const isInMenus = (name) => {
     return (menus.indexOf(name) > -1);
   }
@@ -67,10 +99,24 @@ const AddCustomMenu = () => {
     setMenus([...menus, name]);
   }
 
-  const removeMenu = () => {
+  const removeMenu = (name) => {
     setMenus(table => {
       return table.filter(item => item !== name)
     })
+  }
+
+  const isInDisabledMenus = (name) => {
+    return (disabledMenus.indexOf(name) > -1);
+  }
+
+  const saveTables = () => {
+    AsyncStorage.setItem(PERSISTENCE_KEY+'_LIKES', JSON.stringify(likes));
+    AsyncStorage.setItem(PERSISTENCE_KEY+'_DISLIKES', JSON.stringify(dislikes));
+  }
+
+  const navigateBack = () => {
+    saveTables();
+    navigation.navigate('SelectPreference')
   }
 
   return (
@@ -106,7 +152,7 @@ const AddCustomMenu = () => {
             style={
               ({ pressed }) => [ pressed ? { opacity: 0.8 } : {},
               styles.button_back]}
-            onPress={()=>navigation.navigate('SelectPreference')}>
+            onPress={()=>navigateBack()}>
               <Text style={styles.text_button}>{TEXT_BACK}</Text>
           </Pressable>
           <Pressable 
@@ -114,7 +160,7 @@ const AddCustomMenu = () => {
               ({ pressed }) => [ pressed && buttonEnable ? { opacity: 0.8 } : {},
               {backgroundColor: (buttonEnable ? '#FFBFBF' : '#D9D9D9')},
               styles.button_complete]}
-            onPress={()=>navigation.navigate('SelectPreference')}>
+            onPress={()=>navigateBack()}>
               <Text style={
                 [styles.text_button,
                 {opacity: (buttonEnable ? 1.0 : 0.3)}]}>{TEXT_COMPLETE}</Text>

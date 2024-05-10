@@ -7,6 +7,7 @@ Happetite 2024 Team B Project 1 (ongoing)
 * [react-navigation](https://reactnavigation.org/docs/getting-started/)
 * [react-native-safe-area-context](https://docs.expo.dev/versions/latest/sdk/safe-area-context/)
 * [expo-splash-screen](https://docs.expo.dev/versions/latest/sdk/splash-screen/)
+* [react-native-svg](https://github.com/software-mansion/react-native-svg)
 
 ## References
 
