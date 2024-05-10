@@ -8,6 +8,7 @@ Happetite 2024 Team B Project 1 (ongoing)
 * [react-native-safe-area-context](https://docs.expo.dev/versions/latest/sdk/safe-area-context/)
 * [expo-splash-screen](https://docs.expo.dev/versions/latest/sdk/splash-screen/)
 * [react-native-svg](https://github.com/software-mansion/react-native-svg)
+* [async-stora](https://github.com/react-native-async-storage/async-storage)
 
 ## References
 
