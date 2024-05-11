@@ -73,6 +73,7 @@ const SelectMenu = () => {
   const mode = route.params.mode;
   const category = route.params.category;
 
+  const [menuButtons, setMenuButtons] = useState([]);
   const [likesTable, setLikesTable] = useState([]);
   const [dislikesTable, setDislikesTable] = useState([]);
 
@@ -140,26 +141,29 @@ const SelectMenu = () => {
     return (disabledMenus.indexOf(name) > -1);
   }
 
-  const menuButtons = [];
   const currentDefaultMenus = DEFAULT_MENUS[category];
   const isInTable = mode ? isInLikesTable : isInDislikesTable;
   const push = mode ? pushLikes : pushDislikes;
   const remove = mode ? removeLikes : removeDislikes;
 
-  for (const key in currentDefaultMenus) {
-    let name = currentDefaultMenus[key];
-    let enabled = !isInDisabledMenus(name);
-    menuButtons.push(
-      <Pressable 
-        key={key} 
-        style={({ pressed }) => [ enabled && pressed ? { opacity: 0.8 } : {},
-          (enabled && isInTable(name)) ? styles.button_menu_selected : styles.button_menu]}
-        onPress={()=>{enabled && isInTable(name) ? remove(name) : push(name)}} >
-        <Text style={[{opacity: (enabled ? 1.0 : 0.3)}, styles.text_button]}>{name}</Text>
-        {enabled && isInTable(name) && <MinusCircle style={styles.minus_icon} />}
-      </Pressable>
-    );
-  }
+  useEffect(()=>{
+    const buttons = [];
+    for (const key in currentDefaultMenus) {
+      let name = currentDefaultMenus[key];
+      let enabled = !isInDisabledMenus(name);
+      buttons.push(
+        <Pressable 
+          key={key} 
+          style={({ pressed }) => [ enabled && pressed ? { opacity: 0.8 } : {},
+            (enabled && isInTable(name)) ? styles.button_menu_selected : styles.button_menu]}
+          onPress={()=>{enabled && isInTable(name) ? remove(name) : push(name)}} >
+          <Text style={[{opacity: (enabled ? 1.0 : 0.3)}, styles.text_button]}>{name}</Text>
+          {enabled && isInTable(name) && <MinusCircle style={styles.minus_icon} />}
+        </Pressable>
+      );
+    }
+    setMenuButtons(buttons);
+  }, [likesTable, dislikesTable])
 
   const saveTables = () => {
     AsyncStorage.setItem(PERSISTENCE_KEY+'_LIKESTABLE', JSON.stringify(likesTable));
