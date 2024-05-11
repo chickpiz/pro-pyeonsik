@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BackHandler } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
 
@@ -33,6 +34,7 @@ const SelectPreference = () => {
    * mode == false: select dislikes
    */
   const [mode, setMode] = useState(true);
+  const [initFinished, setInitFinished] = useState(false);
 
   const navigateTo = (_category) => {
     if (_category < 0) {
@@ -64,12 +66,16 @@ const SelectPreference = () => {
     return(()=>BackHandler.removeEventListener('hardwareBackPress', handleBack))
   }, [handleBack]);
 
+  const navigateToHome = () => {
+    setInitFinished(true);
+    AsyncStorage.setItem('INIT_FINISHED', JSON.stringify(initFinished));
+    navigation.navigate('HomeScreen'); 
+    navigation.reset({routes: [{name: 'HomeScreen'}]});
+  }
+
   return (
     <View style={styles.container}>
-      {/* select likes */}
-      {mode && <Text style={styles.text_heading}>{TEXT_HEADING_LIKES}</Text>}
-      {/* select dislikes */}
-      {!(mode) && <Text style={styles.text_heading}>{TEXT_HEADING_DISLIKES}</Text>}
+      <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
       <Text style={styles.text_body}>{TEXT_BODY}</Text> 
       <View style={styles.container_category_buttons}>
         <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
@@ -97,14 +103,10 @@ const SelectPreference = () => {
           <Text style={styles.text_button}>{TEXT_CUSTOM}</Text>
         </Pressable>
       </View>
-      {mode && <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_next]}
-        onPress={()=>setMode(false)}>
+      <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_next]}
+        onPress={()=>{mode ? setMode(false) : navigateToHome()}}>
           <Text style={styles.text_button}>{TEXT_NEXT}</Text>
-      </Pressable>}
-      {!(mode) && <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_next]}
-        onPress={()=>{navigation.navigate('HomeScreen'); navigation.reset({routes: [{name: 'HomeScreen'}]});}}>
-          <Text style={styles.text_button}>{TEXT_NEXT}</Text>
-      </Pressable>}
+      </Pressable>
     </View>
   )
 }

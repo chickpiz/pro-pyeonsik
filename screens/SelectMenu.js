@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { WithLocalSvg } from 'react-native-svg/css';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { ICON_MINUS } from '../assets/Index';
+import MinusCircle from '../assets/icons/MinusCircle';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
 
 const PERSISTENCE_KEY = 'SCREEN_SELECTMENU';
@@ -97,10 +96,15 @@ const SelectMenu = () => {
   }, []);
 
   // save tables when back key pressed
+  const handleBack = () => {
+    saveTables();
+    return false;
+  }
+
   useEffect(()=>{
-    BackHandler.addEventListener('hardwareBackPress', saveTables)
-    return ()=>BackHandler.removeEventListener('hardwareBackPress', saveTables)
-  }, [saveTables])
+    BackHandler.addEventListener('hardwareBackPress', handleBack)
+    return ()=>BackHandler.removeEventListener('hardwareBackPress', handleBack)
+  }, [handleBack])
 
   const isInLikesTable = (name) => {
     return (likesTable.indexOf(name) > -1);
@@ -132,7 +136,7 @@ const SelectMenu = () => {
 
   const disabledMenus = mode ? dislikesTable : likesTable;
 
-  const inDisabledMenus = (name) => {
+  const isInDisabledMenus = (name) => {
     return (disabledMenus.indexOf(name) > -1);
   }
 
@@ -144,7 +148,7 @@ const SelectMenu = () => {
 
   for (const key in currentDefaultMenus) {
     let name = currentDefaultMenus[key];
-    let enabled = !inDisabledMenus(name);
+    let enabled = !isInDisabledMenus(name);
     menuButtons.push(
       <Pressable 
         key={key} 
@@ -152,7 +156,7 @@ const SelectMenu = () => {
           (enabled && isInTable(name)) ? styles.button_menu_selected : styles.button_menu]}
         onPress={()=>{enabled && isInTable(name) ? remove(name) : push(name)}} >
         <Text style={[{opacity: (enabled ? 1.0 : 0.3)}, styles.text_button]}>{name}</Text>
-        {enabled && isInTable(name) && <WithLocalSvg style={{marginLeft: rw(5), alignSelf: 'center'}} asset={ICON_MINUS}/>}
+        {enabled && isInTable(name) && <MinusCircle style={styles.minus_icon} />}
       </Pressable>
     );
   }
@@ -169,10 +173,7 @@ const SelectMenu = () => {
 
   return (
     <View style={styles.container}>
-      {/* select likes */}
-      {mode && <Text style={styles.text_heading}>{TEXT_HEADING_LIKES}</Text>}
-      {/* select dislikes */}
-      {!(mode) && <Text style={styles.text_heading}>{TEXT_HEADING_DISLIKES}</Text>}
+      <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
       <Text style={styles.text_body}>{TEXT_BODY}</Text> 
       <View style={styles.container_menu_buttons}>{menuButtons}</View>
       <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_select_other]}
@@ -257,5 +258,10 @@ const styles = StyleSheet.create({
     paddingBottom: rh(8),
     paddingLeft: rw(10),
     paddingRight: rw(10),
+  },
+  minus_icon: {
+    marginLeft: rw(5), 
+    size: rw(20), 
+    alignSelf: 'center',
   },
 })

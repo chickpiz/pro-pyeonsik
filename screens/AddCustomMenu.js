@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { View, KeyboardAvoidingView, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Platform, BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { WithLocalSvg } from 'react-native-svg/css';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { ICON_MINUS } from '../assets/Index';
+import MinusCircle from '../assets/icons/MinusCircle';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
 import { useKeyboard } from '../hooks/Keyboard';
 
@@ -52,12 +51,6 @@ const AddCustomMenu = () => {
     restoreState();
   }, []);
 
-  // save tables when back key pressed
-  useEffect(()=>{
-    BackHandler.addEventListener('hardwareBackPress', saveTables)
-    return ()=>BackHandler.removeEventListener('hardwareBackPress', saveTables)
-  }, [saveTables])
-
   useEffect(() => {
     if (inputText === '') setButtonEnable(false); 
     else setButtonEnable(true);
@@ -76,7 +69,8 @@ const AddCustomMenu = () => {
           style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_menu]}
           onPress={()=>{removeMenu(menus[key])}} >
           <Text style={styles.text_button}>{menus[key]}</Text>
-          <WithLocalSvg style={{marginLeft: rw(5), alignSelf: 'center'}} asset={ICON_MINUS}/>
+          {/*<Feather style={styles.minus_icon} name='minus-circle' size={rw(20)} color='black' />*/}
+          <MinusCircle style={styles.minus_icon} />
         </Pressable>
       );
     }
@@ -113,6 +107,17 @@ const AddCustomMenu = () => {
     AsyncStorage.setItem(PERSISTENCE_KEY+'_DISLIKES', JSON.stringify(dislikes));
   }
 
+  // save tables when back key pressed
+  const handleBack = () => {
+    saveTables();
+    return false;
+  }
+
+  useEffect(()=>{
+    BackHandler.addEventListener('hardwareBackPress', handleBack)
+    return ()=>BackHandler.removeEventListener('hardwareBackPress', handleBack)
+  }, [handleBack])
+
   const navigateBack = () => {
     saveTables();
     navigation.navigate('SelectPreference')
@@ -120,10 +125,7 @@ const AddCustomMenu = () => {
 
   return (
     <View style={styles.container}>
-      {/* select likes */}
-      {mode && <Text style={styles.text_heading}>{TEXT_HEADING_LIKES}</Text>}
-      {/* select dislikes */}
-      {!(mode) && <Text style={styles.text_heading}>{TEXT_HEADING_DISLIKES}</Text>}
+      <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
       <View style={styles.container_input}>
         <TextInput
           style={[{opacity: (buttonEnable ? 1.0 : 0.3)}, styles.text_input]}
@@ -258,7 +260,6 @@ const styles = StyleSheet.create({
     paddingRight: rw(10),
   },
   button_complete: {
-    //backgroundColor: '#FFBFBF',
     borderRadius: rw(10),
     justifyContent: 'center',
     alignSelf: 'bottom',
@@ -268,5 +269,10 @@ const styles = StyleSheet.create({
     paddingBottom: rh(8),
     paddingLeft: rw(10),
     paddingRight: rw(10),
+  },
+  minus_icon: {
+    marginLeft: rw(5),
+    size: rw(20),
+    alignSelf: 'center',
   },
 })
