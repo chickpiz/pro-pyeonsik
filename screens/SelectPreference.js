@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BackHandler } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { SelectContext } from '../contexts/SelectContext';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
+import { Colors } from '../assets/colors/Colors';
 
 const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
 const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
@@ -17,6 +19,8 @@ const TEXT_DAIRY = '계란 및 유제품';
 const TEXT_OTHERS = '기타';
 const TEXT_CUSTOM = '+직접 입력';
 const TEXT_NEXT = '다음';
+const TEXT_JUMP = '건너뛰기';
+const TEXT_RESULT = '결과 보기';
 
 const CATEGORY_MEAT = 0;
 const CATEGORY_FISH = 1;
@@ -35,6 +39,43 @@ const SelectPreference = () => {
    */
   const [mode, setMode] = useState(true);
   const [initFinished, setInitFinished] = useState(false);
+
+  /**
+   * selected: indicates if any menu has been selected as likes or dislikes
+   */
+  const [selectedLikes, setSelectedLikes] = useState(false);
+  const [selectedDislikes, setSelectedDislikes] = useState(false);
+  const {likes, dislikes} = useContext(SelectContext);
+  const [selected, setSelected] = useState([]);
+
+  useEffect(()=>{
+    if (mode) setSelected(likes);
+    else setSelected(dislikes);
+  }, [likes, dislikes, mode])
+
+  useEffect(()=>{
+    let _likes = false;
+    let _dislikes = false;
+    for (const like in likes) {
+      _likes ||= like;
+    }
+    for (const dislike in dislikes) {
+      _dislikes ||= dislike;
+    }
+    setSelectedLikes(_likes);
+    setSelectedDislikes(_dislikes);
+  }, [selected])
+
+  const handleBack = () => {
+    if(isFocused && !mode) setMode(true);
+    else return false;
+    return true;
+  }
+
+  useEffect(()=>{
+    BackHandler.addEventListener('hardwareBackPress', handleBack);
+    return(()=>BackHandler.removeEventListener('hardwareBackPress', handleBack))
+  }, [handleBack]);
 
   const navigateTo = (_category) => {
     if (_category < 0) {
@@ -55,17 +96,6 @@ const SelectPreference = () => {
     );
   }
 
-  const handleBack = () => {
-    if(isFocused && !mode) setMode(true);
-    else return false;
-    return true;
-  }
-
-  useEffect(()=>{
-    BackHandler.addEventListener('hardwareBackPress', handleBack);
-    return(()=>BackHandler.removeEventListener('hardwareBackPress', handleBack))
-  }, [handleBack]);
-
   const navigateToHome = () => {
     setInitFinished(true);
     AsyncStorage.setItem('INIT_FINISHED', JSON.stringify(initFinished));
@@ -78,34 +108,46 @@ const SelectPreference = () => {
       <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
       <Text style={styles.text_body}>{TEXT_BODY}</Text> 
       <View style={styles.container_category_buttons}>
-        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
+        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+          selected[0] ? styles.button_category_selected : styles.button_category]} 
           onPress={()=>navigateTo(CATEGORY_MEAT)}>
-          <Text style={styles.text_button}>{TEXT_MEAT}</Text>
+          <Text style={[{color: selected[0] ? Colors.white : Colors.black}, styles.text_button]}>{TEXT_MEAT}</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
+        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+          selected[1] ? styles.button_category_selected : styles.button_category]} 
           onPress={()=>navigateTo(CATEGORY_FISH)}>
-          <Text style={styles.text_button}>{TEXT_FISH}</Text>
+          <Text style={[{color: selected[1] ? Colors.white : Colors.black}, styles.text_button]}>{TEXT_FISH}</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
+        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+          selected[2] ? styles.button_category_selected : styles.button_category]} 
           onPress={()=>navigateTo(CATEGORY_VEGET)}>
-          <Text style={styles.text_button}>{TEXT_VEGET}</Text>
+          <Text style={[{color: selected[2] ? Colors.white : Colors.black}, styles.text_button]}>{TEXT_VEGET}</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
+        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+          selected[3] ? styles.button_category_selected : styles.button_category]} 
           onPress={()=>navigateTo(CATEGORY_DAIRY)}>
-          <Text style={styles.text_button}>{TEXT_DAIRY}</Text>
+          <Text style={[{color: selected[3] ? Colors.white : Colors.black}, styles.text_button]}>{TEXT_DAIRY}</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
+        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+          selected[4] ? styles.button_category_selected : styles.button_category]} 
           onPress={()=>navigateTo(CATEGORY_OTHERS)}>
-          <Text style={styles.text_button}>{TEXT_OTHERS}</Text>
+          <Text style={[{color: selected[4] ? Colors.white : Colors.black}, styles.text_button]}>{TEXT_OTHERS}</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_category]} 
+        <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+          selected[5] ? styles.button_category_selected : styles.button_category]} 
           onPress={()=>navigateTo(-1)}>
-          <Text style={styles.text_button}>{TEXT_CUSTOM}</Text>
+          <Text style={[{color: selected[5] ? Colors.white : Colors.black}, styles.text_button]}>{TEXT_CUSTOM}</Text>
         </Pressable>
       </View>
-      <Pressable style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_next]}
+      <Pressable 
+        style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
+        mode ? (selectedLikes? styles.button_next : styles.button_jump)
+            : (selectedDislikes? styles.button_result : styles.button_jump)]}
         onPress={()=>{mode ? setMode(false) : navigateToHome()}}>
-          <Text style={styles.text_button}>{TEXT_NEXT}</Text>
+          <Text style={styles.text_button}>
+            {mode ? (selectedLikes || selectedDislikes? TEXT_NEXT : TEXT_JUMP)
+            : (selectedLikes || selectedDislikes? TEXT_RESULT : TEXT_JUMP)}
+          </Text>
       </Pressable>
     </View>
   )
@@ -117,53 +159,97 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
   },
   container_category_buttons: {
     alignContent: 'center',
     width: rw(333),
     height: rh(489),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
     justifyContent: 'center',
     alignSelf: 'center',
     marginTop: rh(41),
     gap: rh(17),
   },
   text_heading: {
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: rw(28),
+    fontFamily: 'HeadingFont',
+    fontSize: rw(25),
     textAlign: 'center',
     marginTop: rh(145),
   },
   text_body: {
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: 'BodyFont-light',
     fontSize: rw(17),
-    color: '#6B6B6B',
+    color: Colors.bodyTextLight,
     textAlign: 'left',
     alignSelf: 'center',
     marginTop: rh(20),
   },
   text_button: {
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: 'ButtonFont',
     textAlign: 'center',
     alignSelf:'center',
     fontSize: rw(20),
   },
   button_category: {
-    backgroundColor: '#FFBFBF',
-    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.button,
+    borderRadius: rw(25),
+    width: rw(333),
+    height: rh(67),
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  button_category_selected: {
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.emphasize,
+    borderRadius: rw(25),
     width: rw(333),
     height: rh(67),
     alignSelf: 'center',
     justifyContent: 'center',
   },
   button_next: {
-    backgroundColor: '#FFBFBF',
-    borderRadius: rw(10),
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.button,
+    borderRadius: rw(15),
     justifyContent: 'center',
     marginTop: rh(86),
     marginBottom: rh(40),
-    marginLeft: rw(315),
+    marginLeft: rw(311),
+    marginRight: rw(30),
+    paddingTop: rh(8),
+    paddingBottom: rh(8),
+    paddingLeft: rw(10),
+    paddingRight: rw(10),
+  },
+  button_jump: {
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.button,
+    borderRadius: rw(15),
+    justifyContent: 'center',
+    marginTop: rh(86),
+    marginBottom: rh(40),
+    marginLeft: rw(273),
+    marginRight: rw(30),
+    paddingTop: rh(8),
+    paddingBottom: rh(8),
+    paddingLeft: rw(10),
+    paddingRight: rw(10),
+  },
+  button_result: {
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.button,
+    borderRadius: rw(15),
+    justifyContent: 'center',
+    marginTop: rh(86),
+    marginBottom: rh(40),
+    marginLeft: rw(267),
     marginRight: rw(30),
     paddingTop: rh(8),
     paddingBottom: rh(8),

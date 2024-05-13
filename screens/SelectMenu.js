@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { SelectContext } from '../contexts/SelectContext';
 import MinusCircle from '../assets/icons/MinusCircle';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
+import { Colors } from '../assets/colors/Colors';
 
-const PERSISTENCE_KEY = 'SCREEN_SELECTMENU';
+const PERSISTENCE_KEY_LIKESTABLE = 'LIKESTABLE_';
+const PERSISTENCE_KEY_DISLIKESTABLE = 'DISLIKESTABLE_';
 
 const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
 const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
@@ -77,12 +80,14 @@ const SelectMenu = () => {
   const [likesTable, setLikesTable] = useState([]);
   const [dislikesTable, setDislikesTable] = useState([]);
 
+  const {likes, dislikes, dispatchLikes, dispatchDislikes} = useContext(SelectContext);
+
   // load saved selections
   useEffect(()=>{
     const restoreState = async () => {
       try {
-        const savedLikestable= await AsyncStorage.getItem(PERSISTENCE_KEY+'_LIKESTABLE');
-        const savedDislikestable= await AsyncStorage.getItem(PERSISTENCE_KEY+'_DISLIKESTABLE');
+        const savedLikestable= await AsyncStorage.getItem(PERSISTENCE_KEY_LIKESTABLE+category);
+        const savedDislikestable= await AsyncStorage.getItem(PERSISTENCE_KEY_DISLIKESTABLE+category);
 
         const loadedDislikes = savedDislikestable ? JSON.parse(savedDislikestable) : [];
         const loadedLikes = savedLikestable ? JSON.parse(savedLikestable) : [];
@@ -145,6 +150,9 @@ const SelectMenu = () => {
   const isInTable = mode ? isInLikesTable : isInDislikesTable;
   const push = mode ? pushLikes : pushDislikes;
   const remove = mode ? removeLikes : removeDislikes;
+  const selected = mode ? likes : dislikes;
+  const setSelected = mode ? dispatchLikes : dispatchDislikes;
+  const table = mode ? likesTable : dislikesTable;
 
   useEffect(()=>{
     const buttons = [];
@@ -154,20 +162,26 @@ const SelectMenu = () => {
       buttons.push(
         <Pressable 
           key={key} 
-          style={({ pressed }) => [ enabled && pressed ? { opacity: 0.8 } : {},
-            (enabled && isInTable(name)) ? styles.button_menu_selected : styles.button_menu]}
+          style={({ pressed }) => [ enabled && pressed ? { backgroundColor: Colors.emphasize } : {},
+            (isInTable(name)) ? styles.button_menu_selected 
+            : enabled ? styles.button_menu : styles.button_disabled]}
           onPress={()=>{enabled && isInTable(name) ? remove(name) : push(name)}} >
-          <Text style={[{opacity: (enabled ? 1.0 : 0.3)}, styles.text_button]}>{name}</Text>
+          <Text style={[{color: (isInTable(name)) ? Colors.white 
+            : enabled ? Colors.black : Colors.disabled_text},
+            styles.text_button]}>{name}</Text>
           {enabled && isInTable(name) && <MinusCircle style={styles.minus_icon} />}
         </Pressable>
       );
     }
     setMenuButtons(buttons);
+    let _selected = selected;
+    _selected[category] = (table.length > 0);
+    setSelected(_selected);
   }, [likesTable, dislikesTable])
 
   const saveTables = () => {
-    AsyncStorage.setItem(PERSISTENCE_KEY+'_LIKESTABLE', JSON.stringify(likesTable));
-    AsyncStorage.setItem(PERSISTENCE_KEY+'_DISLIKESTABLE', JSON.stringify(dislikesTable));
+    AsyncStorage.setItem(PERSISTENCE_KEY_LIKESTABLE+category, JSON.stringify(likesTable));
+    AsyncStorage.setItem('DISLIKESTABLE_'+category, JSON.stringify(dislikesTable));
   }
 
   const navigateBack = () => {
@@ -195,7 +209,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
   },
   container_menu_buttons: {
     display: 'flex',
@@ -204,7 +218,7 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
     width: rw(385),
     height: rh(489),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
     alignSelf: 'center',
     marginTop: rh(41),
     paddingLeft: rw(10),
@@ -212,28 +226,41 @@ const styles = StyleSheet.create({
     gap: rh(17),
   },
   text_heading: {
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: rw(28),
+    fontFamily: 'HeadingFont',
+    fontSize: rw(25),
     textAlign: 'center',
     marginTop: rh(145),
   },
   text_body: {
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: 'BodyFont-light',
     fontSize: rw(17),
-    color: '#6B6B6B',
+    color: Colors.bodyTextLight,
     textAlign: 'left',
     alignSelf: 'center',
     marginTop: rh(20),
   },
   text_button: {
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: 'ButtonFont',
     textAlign: 'center',
     alignSelf:'center',
     fontSize: rw(20),
   },
   button_menu: {
-    backgroundColor: '#D9D9D9',
-    borderRadius: rw(10),
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.button,
+    borderRadius: rw(15),
+    width: 'fit-content',
+    height: rh(38),
+    justifyContent: 'center',
+    paddingLeft: rw(15),
+    paddingRight: rw(15),
+  },
+  button_disabled: {
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.disabled,
+    borderRadius: rw(15),
     width: 'fit-content',
     height: rh(38),
     justifyContent: 'center',
@@ -241,8 +268,10 @@ const styles = StyleSheet.create({
     paddingRight: rw(15),
   },
   button_menu_selected: {
-    backgroundColor: '#FFBFBF',
-    borderRadius: rw(10),
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.emphasize,
+    borderRadius: rw(15),
     width: 'fit-content',
     height: rh(38),
     justifyContent: 'center',
@@ -251,12 +280,14 @@ const styles = StyleSheet.create({
     paddingRight: rw(10),
   },
   button_select_other: {
-    backgroundColor: '#FFBFBF',
-    borderRadius: rw(10),
+    borderWidth: 1,
+    borderColor: Colors.black,
+    backgroundColor: Colors.button,
+    borderRadius: rw(15),
     justifyContent: 'center',
     marginTop: rh(86),
     marginBottom: rh(40),
-    marginLeft: rw(218),
+    marginLeft: rw(214),
     marginRight: rw(30),
     paddingTop: rh(8),
     paddingBottom: rh(8),
@@ -264,8 +295,8 @@ const styles = StyleSheet.create({
     paddingRight: rw(10),
   },
   minus_icon: {
-    marginLeft: rw(5), 
-    size: rw(20), 
+    marginLeft: rw(10), 
+    size: rw(24), 
     alignSelf: 'center',
   },
 })
