@@ -2,6 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 
+import { SelectContext } from '../contexts/SelectContext';
 import SelectPreference from '../screens/SelectPreference';
 import SelectMenu from '../screens/SelectMenu';
 import AddCustomMenu from '../screens/AddCustomMenu';

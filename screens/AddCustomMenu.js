@@ -6,17 +6,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import MinusCircle from '../assets/icons/MinusCircle';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
+import { Colors } from '../assets/colors/Colors';
 import { useKeyboard } from '../hooks/Keyboard';
 
-const PERSISTENCE_KEY = 'SCREEN_ADDCUSTOMMENU';
+const PERSISTENCE_KEY_LIKES = 'CUSTOME_LIKES';
+const PERSISTENCE_KEY_DISLIKES = 'CUSTOM_DISLIKES';
 
 const TEXT_HEADING_LIKES = '좋아하는 음식을 알려주세요.';
 const TEXT_HEADING_DISLIKES = '피하고 싶은 음식을 알려주세요.';
 const TEXT_PLEASE_INPUT = '키워드를 입력해주세요.';
 
 const TEXT_REGISTER = '등록';
-const TEXT_BACK = '뒤로 가기';
-const TEXT_COMPLETE = '입력 완료';
 
 const AddCustomMenu = () => {
 
@@ -36,8 +36,8 @@ const AddCustomMenu = () => {
   useEffect(()=>{
     const restoreState = async () => {
       try {
-        const savedLikes= await AsyncStorage.getItem(PERSISTENCE_KEY+'_LIKES');
-        const savedDislikes= await AsyncStorage.getItem(PERSISTENCE_KEY+'_DISLIKES');
+        const savedLikes= await AsyncStorage.getItem(PERSISTENCE_KEY_LIKES);
+        const savedDislikes= await AsyncStorage.getItem(PERSISTENCE_KEY_DISLIKES);
 
         const loadedDislikes = savedDislikes ? JSON.parse(savedDislikes) : [];
         const loadedLikes = savedLikes ? JSON.parse(savedLikes) : [];
@@ -103,8 +103,8 @@ const AddCustomMenu = () => {
   }
 
   const saveTables = () => {
-    AsyncStorage.setItem(PERSISTENCE_KEY+'_LIKES', JSON.stringify(likes));
-    AsyncStorage.setItem(PERSISTENCE_KEY+'_DISLIKES', JSON.stringify(dislikes));
+    AsyncStorage.setItem(PERSISTENCE_KEY_LIKES, JSON.stringify(likes));
+    AsyncStorage.setItem(PERSISTENCE_KEY_DISLIKES, JSON.stringify(dislikes));
   }
 
   // save tables when back key pressed
@@ -134,7 +134,7 @@ const AddCustomMenu = () => {
           placeholder={TEXT_PLEASE_INPUT}
           placeholderTextColor='#000000'
         />
-        <View style={{width: 1, height: '100%', backgroundColor: '#FFFFFF', marginLeft: rw(67.64)}}/>
+        <View style={{width: 1, height: '100%', backgroundColor: '#000', marginLeft: rw(21)}}/>
         <Pressable 
           style={({ pressed }) => [ pressed && buttonEnable ? { opacity: 0.8 } : {}, 
           styles.button_register]}
@@ -146,27 +146,6 @@ const AddCustomMenu = () => {
         <ScrollView overflow='scroll' scrollEnabled={true}>
           <View style={styles.container_menu_buttons}>{menuButtons}</View>
         </ScrollView>
-        <View
-          style={styles.container_control_buttons}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> 
-          <Pressable 
-            style={
-              ({ pressed }) => [ pressed ? { opacity: 0.8 } : {},
-              styles.button_back]}
-            onPress={()=>navigateBack()}>
-              <Text style={styles.text_button}>{TEXT_BACK}</Text>
-          </Pressable>
-          <Pressable 
-            style={
-              ({ pressed }) => [ pressed && buttonEnable ? { opacity: 0.8 } : {},
-              {backgroundColor: (buttonEnable ? '#FFBFBF' : '#D9D9D9')},
-              styles.button_complete]}
-            onPress={()=>navigateBack()}>
-              <Text style={
-                [styles.text_button,
-                {opacity: (buttonEnable ? 1.0 : 0.3)}]}>{TEXT_COMPLETE}</Text>
-          </Pressable>
-        </View>
       </KeyboardAvoidingView>
     </View>
   );
@@ -178,16 +157,16 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
   },
   text_heading: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontFamily: 'HeadingFont',
     fontSize: rw(28),
     textAlign: 'center',
     marginTop: rh(145),
   },
   container_input: {
-    borderRadius: rw(10),
+    borderRadius: rw(15),
     width: rw(330),
     height: rh(48),
     marginTop: rh(73),
@@ -195,9 +174,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignContent: 'flex-start',
     justifyContent: 'center',
-    backgroundColor: '#D9D9D9',
+    backgroundColor: Colors.backGround,
     alignSelf: 'center',
     overflow: 'hidden',
+    borderColor: '#000000',
+    borderWidth: 1,
   },
   container_menu_buttons: {
     display: 'flex',
@@ -206,7 +187,7 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
     width: rw(385),
     height: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
     alignSelf: 'center',
     marginTop: rh(30),
     paddingLeft: rw(10),
@@ -214,32 +195,36 @@ const styles = StyleSheet.create({
     gap: rh(17),
   },
   container_control_buttons: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.backGround,
     flexDirection: 'row',
   },
   text_input: {
     alignSelf: 'center',
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: 'BodyFont-medium',
     textAlign: 'left',
-    fontSize: rw(18),
+    width: rw(222),
+    fontSize: rw(20),
     borderBottomColor: '#000000',
     borderBottomWidth: 1,
   },
   text_button: {
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: 'ButtonFont',
     textAlign: 'center',
     alignSelf:'center',
     fontSize: rw(20),
   },
   button_register: {
-    width: rw(75), 
+    width: rw(69), 
     height: '100%', 
-    backgroundColor: '#D9D9D9', 
+    backgroundColor: Colors.backGround, 
+    alignSelf: 'center',
     justifyContent: 'center',
   },
   button_menu: {
-    backgroundColor: '#FFBFBF',
-    borderRadius: rw(10),
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: Colors.button,
+    borderRadius: rw(15),
     width: 'fit-content',
     height: rh(38),
     justifyContent: 'center',
@@ -247,32 +232,9 @@ const styles = StyleSheet.create({
     paddingLeft: rw(15),
     paddingRight: rw(10),
   },
-  button_back: {
-    backgroundColor: '#FFBFBF',
-    borderRadius: rw(10),
-    justifyContent: 'center',
-    alignSelf: 'bottom',
-    marginLeft: rw(30),
-    marginRight: rw(90),
-    paddingTop: rh(8),
-    paddingBottom: rh(8),
-    paddingLeft: rw(10),
-    paddingRight: rw(10),
-  },
-  button_complete: {
-    borderRadius: rw(10),
-    justifyContent: 'center',
-    alignSelf: 'bottom',
-    marginLeft: rw(90),
-    marginRight: rw(30),
-    paddingTop: rh(8),
-    paddingBottom: rh(8),
-    paddingLeft: rw(10),
-    paddingRight: rw(10),
-  },
   minus_icon: {
-    marginLeft: rw(5),
-    size: rw(20),
+    marginLeft: rw(10),
+    size: rw(24),
     alignSelf: 'center',
   },
 })

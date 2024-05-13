@@ -8,7 +8,7 @@ const HomeScreen = () => {
 
   return (
     <View style={{flex: 1, height: '100%', justifyContent: 'center', backgroundColor: '#FFFFFF'}}>
-        <Text style={{fontFamily: 'Pretendard-Regular', fontSize: rw(24), alignSelf: 'center'}}>당신의 취향을 반영 중...</Text>
+        <Text style={{fontFamily: 'BodyFont-medium', fontSize: rw(20), alignSelf: 'center'}}>당신의 취향을 반영 중...</Text>
     </View>
   )
 }
