@@ -2,6 +2,7 @@ import { View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
+import { Colors } from '../assets/colors/Colors';
 
 const HomeScreen = () => {
   const navigation = useNavigation();

@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
-import { View, KeyboardAvoidingView, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
-import { Platform, BackHandler } from 'react-native';
+import { useState, useEffect, useContext } from 'react';
+import { View, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { SelectContext } from '../contexts/SelectContext';
 import MinusCircle from '../assets/icons/MinusCircle';
+import ChevronLeft from '../assets/icons/ChevronLeft';
 import { resizeWidth as rw, resizeHeight as rh } from '../dimensions/Dimensions';
 import { Colors } from '../assets/colors/Colors';
-import { useKeyboard } from '../hooks/Keyboard';
 
 const PERSISTENCE_KEY_LIKES = 'CUSTOME_LIKES';
 const PERSISTENCE_KEY_DISLIKES = 'CUSTOM_DISLIKES';
@@ -25,12 +26,12 @@ const AddCustomMenu = () => {
 
   const mode = route.params.mode;
 
-  const keyboardHeight = useKeyboard();
   const [inputText, setInputText] = useState('');
   const [buttonEnable, setButtonEnable] = useState(false);
-  const [likes, setLikes] = useState([]);
-  const [dislikes, setDislikes] = useState([]);
+  const [likeMenus, setLikeMenus] = useState([]);
+  const [dislikeMenus, setDislikeMenus] = useState([]);
   const [menuButtons, setMenuButtons] = useState([]);
+  const {likes, dislikes, setLikes, setDislikes} = useContext(SelectContext);
 
   // load saved selections
   useEffect(()=>{
@@ -42,8 +43,8 @@ const AddCustomMenu = () => {
         const loadedDislikes = savedDislikes ? JSON.parse(savedDislikes) : [];
         const loadedLikes = savedLikes ? JSON.parse(savedLikes) : [];
 
-        setLikes(loadedLikes);
-        setDislikes(loadedDislikes);
+        setLikeMenus(loadedLikes);
+        setDislikeMenus(loadedDislikes);
       } catch (e) {
         console.warn(e);
       }
@@ -56,9 +57,9 @@ const AddCustomMenu = () => {
     else setButtonEnable(true);
   }, [inputText]);
 
-  const menus = mode ? likes : dislikes;
-  const setMenus = mode ? setLikes : setDislikes;
-  const disabledMenus = mode ? dislikes : likes;
+  const menus = mode ? likeMenus : dislikeMenus;
+  const setMenus = mode ? setLikeMenus : setDislikeMenus;
+  const disabledMenus = mode ? dislikeMenus : likeMenus;
 
   useEffect(() => {
     const updateMenuButtons = []
@@ -69,7 +70,6 @@ const AddCustomMenu = () => {
           style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_menu]}
           onPress={()=>{removeMenu(menus[key])}} >
           <Text style={styles.text_button}>{menus[key]}</Text>
-          {/*<Feather style={styles.minus_icon} name='minus-circle' size={rw(20)} color='black' />*/}
           <MinusCircle style={styles.minus_icon} />
         </Pressable>
       );
@@ -103,8 +103,8 @@ const AddCustomMenu = () => {
   }
 
   const saveTables = () => {
-    AsyncStorage.setItem(PERSISTENCE_KEY_LIKES, JSON.stringify(likes));
-    AsyncStorage.setItem(PERSISTENCE_KEY_DISLIKES, JSON.stringify(dislikes));
+    AsyncStorage.setItem(PERSISTENCE_KEY_LIKES, JSON.stringify(likeMenus));
+    AsyncStorage.setItem(PERSISTENCE_KEY_DISLIKES, JSON.stringify(dislikeMenus));
   }
 
   // save tables when back key pressed
@@ -125,6 +125,11 @@ const AddCustomMenu = () => {
 
   return (
     <View style={styles.container}>
+      <Pressable 
+        style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, styles.button_back_top]}
+        onPress={()=>navigateBack()}>
+        <ChevronLeft style={styles.chevron_left_icon} />
+      </Pressable>
       <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
       <View style={styles.container_input}>
         <TextInput
@@ -134,7 +139,7 @@ const AddCustomMenu = () => {
           placeholder={TEXT_PLEASE_INPUT}
           placeholderTextColor='#000000'
         />
-        <View style={{width: 1, height: '100%', backgroundColor: '#000', marginLeft: rw(21)}}/>
+        <View style={{width: 1, height: '100%', backgroundColor: Colors.black, marginLeft: rw(21)}}/>
         <Pressable 
           style={({ pressed }) => [ pressed && buttonEnable ? { opacity: 0.8 } : {}, 
           styles.button_register]}
@@ -142,11 +147,9 @@ const AddCustomMenu = () => {
           <Text style={[styles.text_button, {opacity: (buttonEnable ? 1.0 : 0.3)}]}>{TEXT_REGISTER}</Text>
         </Pressable>
       </View>
-      <KeyboardAvoidingView style={{flex: 1, marginBottom: (keyboardHeight ? rh(5) : rh(50))}}>
-        <ScrollView overflow='scroll' scrollEnabled={true}>
-          <View style={styles.container_menu_buttons}>{menuButtons}</View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      <ScrollView style={{height: 'fit-content', maxHeight: rh(590), marginTop: rh(30),}} overflow='scroll' scrollEnabled={true}>
+        <View style={styles.container_menu_buttons}>{menuButtons}</View>
+      </ScrollView>
     </View>
   );
 }
@@ -161,7 +164,7 @@ const styles = StyleSheet.create({
   },
   text_heading: {
     fontFamily: 'HeadingFont',
-    fontSize: rw(28),
+    fontSize: rw(25),
     textAlign: 'center',
     marginTop: rh(145),
   },
@@ -189,7 +192,6 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: Colors.backGround,
     alignSelf: 'center',
-    marginTop: rh(30),
     paddingLeft: rw(10),
     paddingRight: rw(10),
     gap: rh(17),
@@ -232,9 +234,22 @@ const styles = StyleSheet.create({
     paddingLeft: rw(15),
     paddingRight: rw(10),
   },
+  button_back_top: {
+    backgroundColor: Colors.backGround,
+    position: 'absolute',
+    width: rw(35),
+    height: rh(35),
+    left: rw(9),
+    top: rh(75),
+  },
   minus_icon: {
     marginLeft: rw(10),
     size: rw(24),
+    alignSelf: 'center',
+  },
+  chevron_left_icon: {
+    width: rw(14.44),
+    height: rh(24.75),
     alignSelf: 'center',
   },
 })

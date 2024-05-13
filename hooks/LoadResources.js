@@ -27,7 +27,7 @@ function loadResources() {
 
   useEffect(() => {
     async function prepareApp() {
-      AsyncStorage.clear();
+      //AsyncStorage.clear();
       try {
         SplashScreen.preventAutoHideAsync();
         await Font.loadAsync({
