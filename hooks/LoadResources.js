@@ -3,6 +3,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const cheerio = require('react-native-cheerio');
+import Axios from 'axios';
+
 import { SelectContext } from '../contexts/SelectContext';
 
 const PERSISTENCE_KEY_LIKESTABLE = 'LIKESTABLE_';
@@ -12,6 +15,64 @@ const PERSISTENCE_KEY_LIKES = 'CUSTOME_LIKES';
 const PERSISTENCE_KEY_DISLIKES = 'CUSTOM_DISLIKES';
 
 SplashScreen.preventAutoHideAsync();
+
+
+async function crawlingData(date) {
+
+  const url = `https://snuco.snu.ac.kr/foodmenu/?date=${date}&orderby=DESC`
+
+  try{
+    // get data from url
+    const response = await Axios.get(url);
+    const html = response.data;
+    //console.log(html);
+
+    // parsing html by cheerio
+    const $ = cheerio.load(html);
+
+    const menu_data = $('.menu-table').find('tbody').children('tr');
+    const menu_arr = [];
+    const meal_list = ['.breakfast','.lunch','.dinner'];
+
+    // raw_data(rest_data) => processed_data(rest_obj)
+    for (var i = 0; i < menu_data.length; i++){
+      rest_obj = {};
+      var rest_data = $(menu_data[i]);
+
+      var title = rest_data.find('.title').text().trim();
+      var temp = title.split(" ");
+
+      for (var j=0; j < temp.length; j++){
+        if (temp[j][0] === '(' && temp[j][temp[j].length-1] === ')'){
+          title = title.replace(temp[j],'');
+        }
+      }
+      rest_obj.title = title;
+
+      for (var j=0; j<meal_list.length; j++){
+        const meal = meal_list[j]
+        var txt = rest_data.find(meal_list[j]).text().trim();
+        var temp = txt.split('\n');
+        
+        for (var k=0; k<temp.length; k++){
+          var line = temp[k];
+          if (line.includes('※') || line.includes("▶") || line.includes("☎") || line=='\r' || line=='' || line.includes("운영시간") || line.includes("샐러드구독문의")){
+            txt = txt.replace(line,'');
+          }
+        }
+        rest_obj[meal.replace('.','')] = txt;
+        
+      }
+    menu_arr.push(rest_obj);
+    }
+
+    return menu_arr
+
+  } catch (e){
+    console.log(e);
+  }
+}
+
 
 function loadResources() {
   
@@ -36,7 +97,17 @@ function loadResources() {
           'BodyFont-medium': require('../assets/fonts/GmarketSansMedium.otf'),
           'BodyFont-light': require('../assets/fonts/Pretendard-Regular.otf'),
         });
-        // TODO: Check and update current menu data (crawl web)
+        // Check and update current menu data (crawl web)
+        const snuMenu = await AsyncStorage.getItem('SNU_MENU')
+        if (!snuMenu) {
+          const today = new Date()
+          const todayDate = `${today.getFullYear()}-${("00"+(today.getMonth()+1).toString()).slice(-2)}-${("00"+(today.getDate()).toString()).slice(-2)}`
+          
+          const menu_arr = await crawlingData(todayDate);
+          await AsyncStorage.setItem('SNU_MENU',JSON.stringify(menu_arr),() => {
+            console.log('저장 완료')})
+        }
+        //console.log(await AsyncStorage.getItem('SNU_MENU'));
 
         // Check if the initial preference setting is finished -> set initFinished
         const savedInitFinished = await AsyncStorage.getItem('INIT_FINISHED');
