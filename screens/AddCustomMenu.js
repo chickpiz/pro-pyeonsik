@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { View, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { BackHandler } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -75,7 +76,12 @@ const AddCustomMenu = () => {
       );
     }
     setMenuButtons(updateMenuButtons);
-  }, [menus]);
+
+    let _newlikes = mode ? likes : dislikes;
+    _newlikes[5] = (menus.length > 0);
+    const setNewLikes = mode ? setLikes : setDislikes;
+    setNewLikes(_newlikes);
+  }, [likeMenus, dislikeMenus]);
 
   const addNewMenu = (name) => {
     if (isInMenus(name)) return; // duplicated menu
@@ -96,6 +102,7 @@ const AddCustomMenu = () => {
     setMenus(table => {
       return table.filter(item => item !== name)
     })
+
   }
 
   const isInDisabledMenus = (name) => {
@@ -138,6 +145,10 @@ const AddCustomMenu = () => {
           value={inputText}
           placeholder={TEXT_PLEASE_INPUT}
           placeholderTextColor='#000000'
+          selectionColor={Colors.button}
+          selectionHandleColor={Colors.emphasize}
+          cursorColor={Colors.emphasize}
+          autoFocus={likes[5] ? false : true}
         />
         <View style={{width: 1, height: '100%', backgroundColor: Colors.black, marginLeft: rw(21)}}/>
         <Pressable 
@@ -147,9 +158,9 @@ const AddCustomMenu = () => {
           <Text style={[styles.text_button, {opacity: (buttonEnable ? 1.0 : 0.3)}]}>{TEXT_REGISTER}</Text>
         </Pressable>
       </View>
-      <ScrollView style={{height: 'fit-content', maxHeight: rh(590), marginTop: rh(30),}} overflow='scroll' scrollEnabled={true}>
+      <KeyboardAwareScrollView style={{height: 'fit-content', maxHeight: rh(580), marginTop: rh(30), marginBottom: rh(10)}} overflow='scroll' scrollEnabled={true}>
         <View style={styles.container_menu_buttons}>{menuButtons}</View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
