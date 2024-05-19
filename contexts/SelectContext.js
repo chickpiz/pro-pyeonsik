@@ -4,6 +4,6 @@ export const SelectContext = createContext({
     likes: [],
     dislikes: [],
 
-    dispatchLikes: ()=>{},
-    dispatchDislikes: ()=>{},
+    setLikes: ()=>{},
+    setDislikes: ()=>{},
 });

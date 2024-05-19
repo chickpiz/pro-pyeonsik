@@ -51,20 +51,35 @@ const SelectPreference = () => {
   useEffect(()=>{
     if (mode) setSelected(likes);
     else setSelected(dislikes);
-  }, [likes, dislikes, mode])
+  }, [mode])
 
   useEffect(()=>{
-    let _likes = false;
-    let _dislikes = false;
-    for (const like in likes) {
-      _likes ||= like;
+    for (let i = 0; i < 6; i++) {
+      if (mode && likes[i]) {
+        setSelectedLikes(true); 
+        return;
+      } else if (!mode && dislikes[i]) {
+        setSelectedDislikes(true);
+        return;
+      }
     }
-    for (const dislike in dislikes) {
-      _dislikes ||= dislike;
+    if (mode) setSelectedLikes(false); 
+    else setSelectedDislikes(false);
+  }, [isFocused])
+
+  useEffect(()=>{
+    for (let i = 0; i < 6; i++) {
+      if (mode && likes[i]) {
+        setSelectedLikes(true); 
+        return;
+      } else if (!mode && dislikes[i]) {
+        setSelectedDislikes(true);
+        return;
+      }
     }
-    setSelectedLikes(_likes);
-    setSelectedDislikes(_dislikes);
-  }, [selected])
+    if (mode) setSelectedLikes(false); 
+    else setSelectedDislikes(false);
+  }, [])
 
   const handleBack = () => {
     if(isFocused && !mode) setMode(true);
@@ -141,8 +156,8 @@ const SelectPreference = () => {
       </View>
       <Pressable 
         style={({ pressed }) => [ pressed ? { opacity: 0.8 } : {}, 
-        mode ? (selectedLikes? styles.button_next : styles.button_jump)
-            : (selectedDislikes? styles.button_result : styles.button_jump)]}
+        mode ? (selectedLikes || selectedDislikes? styles.button_next : styles.button_jump)
+            : (selectedLikes || selectedDislikes? styles.button_result : styles.button_jump)]}
         onPress={()=>{mode ? setMode(false) : navigateToHome()}}>
           <Text style={styles.text_button}>
             {mode ? (selectedLikes || selectedDislikes? TEXT_NEXT : TEXT_JUMP)

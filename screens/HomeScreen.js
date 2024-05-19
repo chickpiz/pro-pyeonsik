@@ -24,7 +24,6 @@ function HomeScreen(){
     prepareHomeScreen();
   },[]);
 
-
   const navigation = useNavigation();
   console.log(menuArr);
 
