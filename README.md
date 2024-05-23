@@ -17,6 +17,7 @@ npx expo install
 * [expo-splash-screen](https://docs.expo.dev/versions/latest/sdk/splash-screen/)
 * [react-native-svg](https://github.com/software-mansion/react-native-svg)
 * [async-storage](https://github.com/react-native-async-storage/async-storage)
+* [react-native-keyboard-aware-scroll-view](https://github.com/APSL/react-native-keyboard-aware-scroll-view)
 
 ## References
 

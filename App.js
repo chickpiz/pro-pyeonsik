@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 
 import { SelectContext } from './contexts/SelectContext';
 import Navigation from './navigation/Index';
@@ -22,8 +23,8 @@ export default function App() {
       <SelectContext.Provider value={{ 
         likes: likes, 
         dislikes: dislikes, 
-        dispatchLikes: setLikes, 
-        dispatchDislikes: setDislikes }}>
+        setLikes: setLikes, 
+        setDislikes: setDislikes }}>
         <MenuContext.Provider value={menuResult}>
           <SafeAreaProvider>
             <Navigation 

@@ -80,7 +80,7 @@ const SelectMenu = () => {
   const [likesTable, setLikesTable] = useState([]);
   const [dislikesTable, setDislikesTable] = useState([]);
 
-  const {likes, dislikes, dispatchLikes, dispatchDislikes} = useContext(SelectContext);
+  const {likes, dislikes, setLikes, setDislikes} = useContext(SelectContext);
 
   // load saved selections
   useEffect(()=>{
@@ -151,7 +151,7 @@ const SelectMenu = () => {
   const push = mode ? pushLikes : pushDislikes;
   const remove = mode ? removeLikes : removeDislikes;
   const selected = mode ? likes : dislikes;
-  const setSelected = mode ? dispatchLikes : dispatchDislikes;
+  const setSelected = mode ? setLikes : setDislikes;
   const table = mode ? likesTable : dislikesTable;
 
   useEffect(()=>{
@@ -181,7 +181,7 @@ const SelectMenu = () => {
 
   const saveTables = () => {
     AsyncStorage.setItem(PERSISTENCE_KEY_LIKESTABLE+category, JSON.stringify(likesTable));
-    AsyncStorage.setItem('DISLIKESTABLE_'+category, JSON.stringify(dislikesTable));
+    AsyncStorage.setItem(PERSISTENCE_KEY_DISLIKESTABLE+category, JSON.stringify(dislikesTable));
   }
 
   const navigateBack = () => {
