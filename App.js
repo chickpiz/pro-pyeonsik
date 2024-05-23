@@ -6,9 +6,10 @@ import { SelectContext } from './contexts/SelectContext';
 import Navigation from './navigation/Index';
 import loadResources from './hooks/LoadResources';
 import useColorScheme from './hooks/UseColorScheme';
+import { MenuContext } from './contexts/MenuContext';
 
 export default function App() {
-  const [isLoadingComplete, initFinished, selectedLikes, selectedDislikes] = loadResources();
+  const [isLoadingComplete, initFinished, selectedLikes, selectedDislikes, menuResult] = loadResources();
   const colorScheme = useColorScheme();
 
   const [likes, setLikes] = useState(selectedLikes);
@@ -23,13 +24,15 @@ export default function App() {
         dislikes: dislikes, 
         dispatchLikes: setLikes, 
         dispatchDislikes: setDislikes }}>
-        <SafeAreaProvider>
-          <Navigation 
-            initFinished={initFinished}
-            colorScheme={colorScheme}
-          />
-          <StatusBar />
-        </SafeAreaProvider>
+        <MenuContext.Provider value={menuResult}>
+          <SafeAreaProvider>
+            <Navigation 
+              initFinished={initFinished}
+              colorScheme={colorScheme}
+            />
+            <StatusBar />
+          </SafeAreaProvider>
+        </MenuContext.Provider>
       </SelectContext.Provider>
     );
   }
