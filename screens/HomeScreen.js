@@ -15,6 +15,12 @@ const mealText = ["아침", "점심", "저녁"];
 const mealId = ["breakfast","lunch","dinner"];
 const weekDay = ['일', '월', '화', '수', '목', '금', '토'];
 
+const PERSISTENCE_KEY_LIKESTABLE = 'LIKESTABLE_';
+const PERSISTENCE_KEY_DISLIKESTABLE = 'DISLIKESTABLE_';
+const PERSISTENCE_KEY_LIKES = 'CUSTOME_LIKES';
+const PERSISTENCE_KEY_DISLIKES = 'CUSTOM_DISLIKES';
+
+
 function getDateStr(date) {
   const dateStr = `${date.getFullYear()}/${("00"+(date.getMonth()+1).toString()).slice(-2)}/${("00"+(date.getDate()).toString()).slice(-2)} (${weekDay[date.getDay()]})`
   return dateStr;
@@ -40,6 +46,11 @@ function HomeScreen(){
   const [currentMeal, setCurrentMeal] = useState("breakfast");
   const [mealButtonArr, setMealButtonArr] = useState([]);
   const [dietList, setDietList] = useState([]);
+
+  // in selectMenu, these means table in specific category, but in homescreen, these means table in all category
+  const [likesTable, setLikesTable] = useState([]);
+  const [dislikesTable, setDislikesTable] = useState([]);
+  const categoryNum = 5;
 
   const menuObj = useContext(MenuContext);
   
@@ -77,6 +88,64 @@ function HomeScreen(){
     prepareHomeScreen();
   },[]);
 
+
+  //load like, dislike table
+  useEffect(()=>{
+    const restoreState = async () => {
+      try {
+        let likesTable = [];
+        let dislikesTable =[];
+        for (let category =0; category < categoryNum; category++){
+          const savedLikestable= await AsyncStorage.getItem(PERSISTENCE_KEY_LIKESTABLE+category);
+          const savedDislikestable= await AsyncStorage.getItem(PERSISTENCE_KEY_DISLIKESTABLE+category);
+  
+          const loadedDislikes = savedDislikestable ? JSON.parse(savedDislikestable) : [];
+          const loadedLikes = savedLikestable ? JSON.parse(savedLikestable) : [];
+
+          likesTable = likesTable.concat(loadedLikes);
+          dislikesTable = dislikesTable.concat(loadedDislikes);
+        }
+
+        for (let i = 0; i < likesTable.length; i++ ){
+          words = likesTable[i].split(' ');
+          if (words[1] == '전체'){
+            likesTable[i] = words[0].replace('고기','');
+          }
+        }
+
+        for (let i = 0; i < dislikesTable.length; i++ ){
+          words = dislikesTable[i].split(' ');
+          if (words[1] == '전체'){
+            dislikesTable[i] = words[0].replace('고기','');
+          }
+        }
+
+        if (likesTable.includes('소')){
+          likesTable.push('쇠');
+        }
+        if (dislikesTable.includes('소')){
+          dislikesTable.push('쇠');
+        }
+
+        const savedLikes= await AsyncStorage.getItem(PERSISTENCE_KEY_LIKES);
+        const savedDislikes= await AsyncStorage.getItem(PERSISTENCE_KEY_DISLIKES);
+
+        const loadedDislikesCustom = savedDislikes ? JSON.parse(savedDislikes) : [];
+        const loadedLikesCustom = savedLikes ? JSON.parse(savedLikes) : [];
+
+        likesTable = likesTable.concat(loadedLikesCustom);
+        dislikesTable = dislikesTable.concat(loadedDislikesCustom);        
+
+        setLikesTable(likesTable);
+        setDislikesTable(dislikesTable);
+
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    restoreState();
+  }, []);
+
   //create meal_button_arr
   useEffect(()=>{
     const buttons = [];
@@ -101,18 +170,63 @@ function HomeScreen(){
   },[currentMeal])
 
   //create diet list
+
+  function scoreRest(dietContent) {
+    if (!dietContent) {
+      return undefined;
+    }
+
+    let score = 0;
+    const Filtered = [];
+
+    const words = dietContent.split('\n');
+
+    for (let word of words) {
+      const isFood = !(word.includes('(') && word.includes(')')) && !(word.includes('*')) && !(word.includes('<') && word.includes('>')) && !(word.includes('★')) && !(word.includes('♣'))
+
+      if (isFood){
+        for (let likes of likesTable){
+          if (word.includes(likes) && !Filtered.includes(likes)){
+            score = score + 1;
+            Filtered.push(likes);
+          }
+        }
+        for (let dislikes of dislikesTable){
+          if (word.includes(dislikes) && !Filtered.includes(likes)){
+            score = score - 1;
+            Filtered.push(likes);
+          }
+        }
+      }
+    }
+
+
+    return score;
+  }
+  
   useEffect(()=>{
     function createDietList() {
       const dietList = [];
       const oneDayMenu = menuObj[dateIdList[dateIdx]];
+      const restTitleTable = [];
 
       if (oneDayMenu){
-        for (var i = 0; i < oneDayMenu.length; i++) {
+        // scoring
+        for (var i =0; i < oneDayMenu.length; i++) {
           const restMenu = oneDayMenu[i];
+          const dietContent = restMenu[currentMeal];
+
+          oneDayMenu[i]["score"] = scoreRest(dietContent);
+        }
+        
+        const orderedOneDayMenu = oneDayMenu.sort((a,b) => (a.score > b.score || (a.score==b.score && a.title.toLowerCase() < b.title.toLowerCase())) ? -1 : 1); 
+        
+        for (var i = 0; i < orderedOneDayMenu.length; i++) {
+          const restMenu = orderedOneDayMenu[i];
           const restTitle = restMenu["title"];
           const dietContent = restMenu[currentMeal];
-          console.log(dietContent)
-          if (dietContent){
+
+          if (dietContent && restTitleTable.indexOf(restTitle) < 0) {
             dietList.push(
               <View key={`diet${i}`} style={styles.diet}>
                 <Text style={styles.diet_title}>{restTitle}</Text>
@@ -120,13 +234,15 @@ function HomeScreen(){
               </View>
             )
           }
+
+          restTitleTable.push(restTitle);
       }
       }
 
       setDietList(dietList);
     }
     createDietList();
-  }, [dateIdx, dateIdList, currentMeal])
+  }, [dateIdx, dateIdList, currentMeal, likesTable, dislikesTable])
 
 
   return (
@@ -134,11 +250,11 @@ function HomeScreen(){
         <Text style={styles.text_heading}>{TEXT_HEADING}</Text>
         <View style={styles.show_date}>
           <Pressable onPress={()=>{(dateIdx!==0)&&setDateIdx(dateIdx-1)}}>
-            <Text style={styles.arrow}>{'<'}</Text>
+            <Text style={[styles.arrow, dateIdx ==0 && { color: Colors.backGround }]}>{'<'}</Text>
           </Pressable>
           <Text style={styles.date_text}>{dateList[dateIdx]}</Text>
           <Pressable onPress={()=>{(dateIdx!==dateList.length-1)&&setDateIdx(dateIdx+1)}}>
-            <Text style={styles.arrow}>{'>'}</Text>
+            <Text style={[styles.arrow, dateIdx==dateList.length-1 && { color: Colors.backGround }]}>{'>'}</Text>
           </Pressable>
         </View>
         <View style={styles.show_meal}>{mealButtonArr}</View>

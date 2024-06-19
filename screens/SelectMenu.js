@@ -165,7 +165,7 @@ const SelectMenu = () => {
           style={({ pressed }) => [ enabled && pressed ? { backgroundColor: Colors.emphasize } : {},
             (isInTable(name)) ? styles.button_menu_selected 
             : enabled ? styles.button_menu : styles.button_disabled]}
-          onPress={()=>{enabled && isInTable(name) ? remove(name) : push(name)}} >
+          onPress={()=>{(enabled && isInTable(name)) ? remove(name) : ((enabled) && push(name))}} >
           <Text style={[{color: (isInTable(name)) ? Colors.white 
             : enabled ? Colors.black : Colors.disabled_text},
             styles.text_button]}>{name}</Text>
@@ -189,6 +189,7 @@ const SelectMenu = () => {
     navigation.navigate('SelectPreference')
   }
 
+  console.log(likesTable)
   return (
     <View style={styles.container}>
       <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
