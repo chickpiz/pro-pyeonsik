@@ -114,8 +114,8 @@ const SelectPreference = () => {
   const navigateToHome = () => {
     setInitFinished(true);
     AsyncStorage.setItem('INIT_FINISHED', JSON.stringify(initFinished));
-    navigation.navigate('ApplyPreference'); 
-    navigation.reset({routes: [{name: 'ApplyPreference'}]});
+    navigation.navigate('HomeScreen'); 
+    navigation.reset({routes: [{name: 'HomeScreen'}]});
   }
 
   return (
