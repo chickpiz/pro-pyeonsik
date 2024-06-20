@@ -7,6 +7,7 @@ const cheerio = require('react-native-cheerio');
 import Axios from 'axios';
 
 import { SelectContext } from '../contexts/SelectContext';
+import { PassThrough } from 'stream';
 
 const PERSISTENCE_KEY_LIKESTABLE = 'LIKESTABLE_';
 const PERSISTENCE_KEY_DISLIKESTABLE = 'DISLIKESTABLE_';
@@ -18,14 +19,12 @@ SplashScreen.preventAutoHideAsync();
 
 
 async function crawlingData(date) {
-
   const url = `https://snuco.snu.ac.kr/foodmenu/?date=${date}&orderby=DESC`
 
   try{
     // get data from url
     const response = await Axios.get(url);
     const html = response.data;
-    //console.log(html);
 
     // parsing html by cheerio
     const $ = cheerio.load(html);
@@ -60,12 +59,12 @@ async function crawlingData(date) {
             txt = txt.replace(line,'');
           }
         }
+        txt = txt.trim('\n');
         rest_obj[meal.replace('.','')] = txt;
         
       }
     menu_arr.push(rest_obj);
     }
-
     return menu_arr
 
   } catch (e){
@@ -73,6 +72,10 @@ async function crawlingData(date) {
   }
 }
 
+function getDateStr(date) {
+  const dateStr = `${date.getFullYear()}-${("00"+(date.getMonth()+1).toString()).slice(-2)}-${("00"+(date.getDate()).toString()).slice(-2)}`;
+  return dateStr;
+}
 
 function loadResources() {
   
@@ -85,6 +88,7 @@ function loadResources() {
    */
   const [selectedLikes, setSelectedLikes] = useState([]);
   const [selectedDislikes, setSelectedDislikes] = useState([]);
+  const [menuResult, setMenuResult] = useState({});
 
   useEffect(() => {
     async function prepareApp() {
@@ -97,17 +101,30 @@ function loadResources() {
           'BodyFont-medium': require('../assets/fonts/GmarketSansMedium.otf'),
           'BodyFont-light': require('../assets/fonts/Pretendard-Regular.otf'),
         });
+
         // Check and update current menu data (crawl web)
-        const snuMenu = await AsyncStorage.getItem('SNU_MENU')
-        if (!snuMenu) {
-          const today = new Date()
-          const todayDate = `${today.getFullYear()}-${("00"+(today.getMonth()+1).toString()).slice(-2)}-${("00"+(today.getDate()).toString()).slice(-2)}`
-          
-          const menu_arr = await crawlingData(todayDate);
-          await AsyncStorage.setItem('SNU_MENU',JSON.stringify(menu_arr),() => {
-            console.log('저장 완료')})
+        var snuMenu = await AsyncStorage.getItem('SNU_MENU');
+        snuMenu = (snuMenu) ? JSON.parse(snuMenu) : {};
+        var isChanged = false;
+        
+        const today = new Date();
+        const yesterday = new Date(today);
+        const tomorrow = new Date(today);
+        yesterday.setDate(today.getDate()-1);
+        tomorrow.setDate(today.getDate()+1)
+        const dateList = [yesterday,today,tomorrow];
+        const dateStrList = dateList.map((date)=>getDateStr(date));
+        var result = {}
+        
+        for (var i = 0; i<dateStrList.length; i++){
+          var date = dateStrList[i];
+          result[date] = snuMenu[date] ? snuMenu[date]: await crawlingData(date); 
         }
-        //console.log(await AsyncStorage.getItem('SNU_MENU'));
+        setMenuResult(result);
+
+        await AsyncStorage.setItem('SNU_MENU',JSON.stringify(result),() => {
+          console.log('저장 완료')});
+
 
         // Check if the initial preference setting is finished -> set initFinished
         const savedInitFinished = await AsyncStorage.getItem('INIT_FINISHED');
@@ -158,7 +175,7 @@ function loadResources() {
     prepareApp();
   }, []);
 
-  return [appIsReady, initFinished, selectedLikes, selectedDislikes];
+  return [appIsReady, initFinished, selectedLikes, selectedDislikes, menuResult];
 }
 
 export default loadResources;

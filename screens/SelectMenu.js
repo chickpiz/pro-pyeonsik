@@ -189,6 +189,7 @@ const SelectMenu = () => {
     navigation.navigate('SelectPreference')
   }
 
+  console.log(likesTable)
   return (
     <View style={styles.container}>
       <Text style={styles.text_heading}>{mode ? TEXT_HEADING_LIKES : TEXT_HEADING_DISLIKES}</Text>
