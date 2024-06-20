@@ -165,7 +165,7 @@ const SelectMenu = () => {
           style={({ pressed }) => [ enabled && pressed ? { backgroundColor: Colors.emphasize } : {},
             (isInTable(name)) ? styles.button_menu_selected 
             : enabled ? styles.button_menu : styles.button_disabled]}
-          onPress={()=>{(enabled && isInTable(name)) ? remove(name) : ((enabled) && push(name))}} >
+          onPress={()=>{enabled ? (isInTable(name) ? remove(name) : push(name)) : []}} >
           <Text style={[{color: (isInTable(name)) ? Colors.white 
             : enabled ? Colors.black : Colors.disabled_text},
             styles.text_button]}>{name}</Text>

@@ -32,7 +32,9 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/Pretendard-SemiBold.otf",
+            "./assets/fonts/GmarketSansBold.otf",
+            "./assets/fonts/GmarketSansLight.otf",
+            "./assets/fonts/GmarketSansMedium.otf",
             "./assets/fonts/Pretendard-Regular.otf"
           ]
         }
