@@ -6,6 +6,7 @@ import { SelectContext } from '../contexts/SelectContext';
 import SelectPreference from '../screens/SelectPreference';
 import SelectMenu from '../screens/SelectMenu';
 import AddCustomMenu from '../screens/AddCustomMenu';
+import ApplyPreference from '../screens/ApplyPreference';
 import HomeScreen from '../screens/HomeScreen';
 
 function Navigation({initFinished, colorScheme}) {
@@ -41,6 +42,10 @@ function RootNavigator({initFinished}) {
         name='AddCustomMenu' 
         component={AddCustomMenu}
         options={{ animationEnabled: false }}
+      />
+      <Stack.Screen 
+        name='ApplyPreference' 
+        component={ApplyPreference}
       />
       <Stack.Screen 
         name='HomeScreen' 
